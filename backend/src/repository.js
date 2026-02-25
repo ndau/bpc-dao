@@ -104,7 +104,7 @@ const repository = {
 									WHERE p.proposal_id = $1
                   ORDER BY v.createdon desc`;
 
-    return (
+    return db_query(
       QUERY.any,
       sql,
       [proposal_id],

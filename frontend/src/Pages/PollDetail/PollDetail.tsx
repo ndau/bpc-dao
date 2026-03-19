@@ -22,6 +22,13 @@ interface ProposalVotesState {
 //interface T extends adminProcessedProposalResponseI, pollResponseBaseObjI{};
 
 const PollDetail = () => {
+  const voteNumberFormatter = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 5,
+    maximumFractionDigits: 5,
+  });
+
+  const formatVoteValue = (value: number) => voteNumberFormatter.format(Number.isFinite(value) ? value : 0);
+
   const setRefreshProposalDetailFunc = useAdminPanelRefreshStore((state) => state.setRefreshProposalDetailFunc);
   const { proposalId = '' } = useParams();
   const walletAddress = useNdauConnectStore((state) => state.walletAddress);
@@ -187,9 +194,7 @@ const PollDetail = () => {
                           <div>{item}</div>{' '}
                           <div>
                             Votes Cast:{' '}
-                            {isNaN(tally[item])
-                              ? '0'
-                              : new Intl.NumberFormat('en-IN', { maximumSignificantDigits: 15 }).format(tally[item])}
+                            {formatVoteValue(tally[item])}
                           </div>
                         </div>
                         <div
@@ -324,9 +329,7 @@ const PollDetail = () => {
                               <td>{item.summary}</td>
                               <td>
                                 <div style={{ textAlign: 'right' }}>
-                                  {new Intl.NumberFormat('en-IN', { maximumSignificantDigits: 15 }).format(
-                                    parseFloat(item.voting_power)
-                                  )}
+                                  {formatVoteValue(parseFloat(item.voting_power))}
                                 </div>
                               </td>
                             </tr>

@@ -1,13 +1,14 @@
-FROM node:lts-alpine as builder
+FROM node:lts-alpine AS builder
 
-ENV NODE_ENV production
-ENV DISABLE_ESLINT_PLUGIN true
+ENV DISABLE_ESLINT_PLUGIN=true
 
 WORKDIR /usr/src/app
 
-COPY . .
+COPY package*.json ./
 
-RUN npm ci --only=production
+RUN npm ci
+
+COPY . .
 
 RUN npm run build
 

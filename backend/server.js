@@ -119,6 +119,7 @@
 const express = require('express');
 const parser = require("body-parser");
 const ndauConnect = require('./src/socket/ndauConnect');
+const votes = require('./src/controllers/votes_controller');
 
 const { createServer } = require('http');
 require('dotenv').config();
@@ -163,6 +164,7 @@ const io = new Server(httpServer, {
   allowEIO3: true,
 });
 
+votes.setSocketIO(io);
 ndauConnect(io);
 
 exports.httpServer = httpServer;

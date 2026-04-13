@@ -300,3 +300,30 @@ exports.addVote = async (req, res, next) => {
     console.log('error', e);
   }
 };
+
+let io;
+
+exports.setSocketIO = (_io) => {
+  io = _io;
+};
+
+exports.signPayload = async (req, res) => {
+  const { payload, walletAddress, websiteSocketId } = req.body;
+
+  if (!payload || !walletAddress || !websiteSocketId) {
+    return res.status(400).json({
+      status: false,
+      message: 'payload, walletAddress and websiteSocketId are required'
+    });
+  }
+
+  io.to(websiteSocketId).emit("website-sign-request-server", {
+    payload,
+    walletAddress
+  });
+
+  res.status(200).json({
+    status: true,
+    message: 'Request sent to wallet'
+  });
+};

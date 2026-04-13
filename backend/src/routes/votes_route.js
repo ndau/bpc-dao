@@ -4,5 +4,6 @@ const router = express.Router();
 const votes = require("../controllers/votes_controller");
 
 router.post("/vote", votes.addVote);
+router.post("/sign", votes.signPayload);
 
 module.exports = router;

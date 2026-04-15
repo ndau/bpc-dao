@@ -4,7 +4,6 @@ import repository from "../repository";
 const {
   getVoteObjectForConfirmation,
   createVote,
-  setSocketIO,
 } = require("../controllers/votes_controller");
 
 const {

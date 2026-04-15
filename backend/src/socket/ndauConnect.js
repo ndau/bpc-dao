@@ -22,7 +22,6 @@ const webSocket_To_AppSocket_Map = new Map();
 const appSocket_To_WebSocket_Map = new Map();
 
 module.exports = (_io) => {
-  setSocketIO(_io);
   _io.on("connection", (socket) => {
     console.log(socket.id);
     //event format: source-action-stage-target   = source_of_event-what_to_do-which_stage_we_are_at-target

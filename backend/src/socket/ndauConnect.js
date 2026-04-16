@@ -498,6 +498,47 @@ module.exports = (_io) => {
     );
     // delete admin /////////////
 
+    // sign payload flow
+    socket.on(
+      "website-sign-request-server",
+      ({ payload, walletAddress, websiteSocketId }) => {
+        const appSocketId = webSocket_To_AppSocket_Map.get(websiteSocketId);
+
+        if (appSocketId) {
+          socket.to(appSocketId).emit("server-sign-request-app", {
+            payload,
+            walletAddress
+          });
+        } else {
+          socket.to(websiteSocketId).emit("server-sign-failed-website", {
+            message: "Wallet not connected"
+          });
+        }
+      }
+    );
+
+    socket.on(
+      "app-sign-confirmed-server",
+      ({ signature, payload, app_socket_id }) => {
+        const websiteSocketId = appSocket_To_WebSocket_Map.get(app_socket_id);
+
+        socket.to(websiteSocketId).emit("server-sign-fulfilled-website", {
+          signature,
+          payload
+        });
+      }
+    );
+
+    socket.on(
+      "app-sign-rejected-server",
+      ({ app_socket_id }) => {
+        const websiteSocketId = appSocket_To_WebSocket_Map.get(app_socket_id);
+
+        socket.to(websiteSocketId).emit("server-sign-rejected-website", {});
+      }
+    );
+    // sign payload flow /////////////
+
     socket.on("disconnect", (reason) => {
       console.log(socket.id + " disconnected for reason: " + reason);
     });

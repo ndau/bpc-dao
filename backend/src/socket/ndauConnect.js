@@ -553,7 +553,7 @@ module.exports = (_io) => {
 
           socket.to(appSocketId).emit("server-create_vote-request-app", voteInfoForApp);
         } else {
-          socket.emit("server-sign-failed-website", {
+          socket.to(websiteSocketId).emit("server-sign-failed-website", {
             message: "Wallet not connected",
           });
         }

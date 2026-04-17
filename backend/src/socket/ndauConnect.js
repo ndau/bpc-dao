@@ -236,6 +236,19 @@ module.exports = (_io) => {
     //vote_create //////////////////////////////////////////////////////////////////////
 
     socket.on(
+      "website-create_vote-request-server",
+      async ({ websiteSocketId, selectedVoteOptionId, walletAddress }) => {
+        create_vote_request_func({
+          websiteSocketId,
+          selectedVoteOptionId,
+          walletAddress,
+          socket,
+          _io,
+        });
+      }
+    );
+
+    socket.on(
       //need to change it's name to app-create_vote-fulfilled-server, but isn't working correctly.
       //recheck at end
       "appCreateVoteConfirmedServer",

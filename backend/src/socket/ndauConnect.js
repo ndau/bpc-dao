@@ -1,5 +1,6 @@
 //import from vote_controller
 import repository from "../repository";
+import yaml from "js-yaml";
 
 const {
   getVoteObjectForConfirmation,
@@ -20,6 +21,7 @@ const {
 //Map website_socket_id --> app_socket_id
 const webSocket_To_AppSocket_Map = new Map();
 const appSocket_To_WebSocket_Map = new Map();
+const signPayloadMap = new Map();
 
 module.exports = (_io) => {
   _io.on("connection", (socket) => {
@@ -264,6 +266,25 @@ module.exports = (_io) => {
         console.log("app-create_vote-confirmed-server");
         const websiteSocketId = appSocket_To_WebSocket_Map.get(app_socket_id);
 
+        const signPayloadData = signPayloadMap.get(app_socket_id);
+
+        if (signPayloadData && isNaN(Number(proposal_id))) {
+          signPayloadMap.delete(app_socket_id);
+
+          socket.to(signPayloadData.websiteSocketId).emit("server-sign-fulfilled-website", {
+            signature,
+            payload: signPayloadData.payload,
+          });
+
+          socket.emit("server-vote_create-fulfilled-app", {
+            walletAddress: wallet_address,
+            proposal_heading,
+            voting_option_heading,
+          });
+
+          return;
+        }
+
         const res = await repository.addVote(
           proposal_id,
           voting_option_id,
@@ -315,6 +336,15 @@ module.exports = (_io) => {
         console.log("app-create_vote-rejected-server");
 
         const websiteSocketId = appSocket_To_WebSocket_Map.get(app_socket_id);
+
+        const signPayloadData = signPayloadMap.get(app_socket_id);
+
+        if (signPayloadData) {
+          signPayloadMap.delete(app_socket_id);
+
+          socket.to(signPayloadData.websiteSocketId).emit("server-sign-rejected-website", {});
+          return;
+        }
 
         socket.to(websiteSocketId).emit("server-vote_create-rejected-website", {
           walletAddress: wallet_address,
@@ -501,40 +531,32 @@ module.exports = (_io) => {
     // sign payload flow
     socket.on(
       "website-sign-request-server",
-      ({ payload, walletAddress, websiteSocketId }) => {
+      ({ payload, walletAddress }) => {
+        const websiteSocketId = socket.id;
         const appSocketId = webSocket_To_AppSocket_Map.get(websiteSocketId);
 
         if (appSocketId) {
-          socket.to(appSocketId).emit("server-sign-request-app", {
+          const decoded = Buffer.from(payload, "base64").toString("utf-8");
+          const parsed = yaml.load(decoded);
+
+          const voteInfoForApp = {
+            proposal_heading: parsed.proposal.proposal_heading,
+            proposal_id: parsed.proposal.proposal_id,
+            voting_option_id: parsed.proposal.voting_option_id,
+            voting_option_heading: parsed.proposal.voting_option_heading,
+          };
+
+          signPayloadMap.set(appSocketId, {
             payload,
-            walletAddress
+            websiteSocketId,
           });
+
+          socket.to(appSocketId).emit("server-create_vote-request-app", voteInfoForApp);
         } else {
           socket.to(websiteSocketId).emit("server-sign-failed-website", {
-            message: "Wallet not connected"
+            message: "Wallet not connected",
           });
         }
-      }
-    );
-
-    socket.on(
-      "app-sign-confirmed-server",
-      ({ signature, payload, app_socket_id }) => {
-        const websiteSocketId = appSocket_To_WebSocket_Map.get(app_socket_id);
-
-        socket.to(websiteSocketId).emit("server-sign-fulfilled-website", {
-          signature,
-          payload
-        });
-      }
-    );
-
-    socket.on(
-      "app-sign-rejected-server",
-      ({ app_socket_id }) => {
-        const websiteSocketId = appSocket_To_WebSocket_Map.get(app_socket_id);
-
-        socket.to(websiteSocketId).emit("server-sign-rejected-website", {});
       }
     );
     // sign payload flow /////////////
